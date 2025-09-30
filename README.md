@@ -97,7 +97,7 @@ To-DoList - это веб-приложение для управления за�
 
 1. **Клонирование репозитория**
    ```bash
-   git clone https://github.com/AntiJeka/To-doList.git
+   git clone https://github.com/AntiJeka/ToDoList.git
    cd todolist
    ```
 
