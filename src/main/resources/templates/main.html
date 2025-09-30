@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List - Управление задачами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #2ec4b6;
+            --warning: #ff9f1c;
+            --danger: #e71d36;
+            --gray: #f8fafc;
+            --gray-dark: #e2e8f0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .todo-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .todo-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .todo-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .date-display {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .todo-content {
+            padding: 25px;
+        }
+
+        .add-task-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .add-task-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--gray-dark);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--gray);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--gray-dark);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--success);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 900px) {
+            .tasks-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-card.completed {
+            opacity: 0.7;
+            border-left-color: var(--success);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .task-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .task-card.completed .task-title {
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .task-comment {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            flex: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .task-priority {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background: #ffeaea;
+            color: var(--danger);
+        }
+
+        .priority-medium {
+            background: #fff4e5;
+            color: var(--warning);
+        }
+
+        .priority-low {
+            background: #e8f7f5;
+            color: var(--success);
+        }
+
+        .task-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .motivation-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .motivation-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .motivation-text {
+            font-style: italic;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .productivity-tip {
+            background: var(--gray);
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-dark);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .priority-selectors {
+            display: flex;
+            gap: 10px;
+        }
+
+        .priority-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid var(--gray-dark);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .priority-option.active {
+            border-color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .priority-option.high.active {
+            border-color: var(--danger);
+            background: rgba(231, 29, 54, 0.1);
+            color: var(--danger);
+        }
+
+        .priority-option.medium.active {
+            border-color: var(--warning);
+            background: rgba(255, 159, 28, 0.1);
+            color: var(--warning);
+        }
+
+        .priority-option.low.active {
+            border-color: var(--success);
+            background: rgba(46, 196, 182, 0.1);
+            color: var(--success);
+        }
+
+        .modal-footer {
+            padding: 20px;
+            background: var(--gray);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-dark);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #d1d9e6;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c81a30;
+        }
+
+        .task-detail-comment {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--gray);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: var(--gray);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: var(--gray-dark);
+        }
+
+        .task-card {
+            display: block;
+        }
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e68900;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #27a594;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal-footer button {
+            flex: 1;
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Секция пользователя -->
+    <div class="user-section">
+        <div class="user-info">
+            <div class="user-avatar">U</div>
+            <div>
+                <div style="font-weight: 600; color: var(--text);" th:text="${username}">Пользователь</div>
+                <div style="font-size: 14px; color: var(--text-light);">Добро пожаловать в ваш список задач!</div>
+            </div>
+        </div>
+        <form th:action="@{/auth/logout}" method="post">
+            <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+        </form>
+    </div>
+
+    <div class="main-content">
+        <!-- Основная карточка -->
+        <div class="todo-card">
+            <div class="todo-header">
+                <h2><i class="fas fa-tasks"></i> Мой Список Задач</h2>
+                <div class="date-display" id="currentDate"></div>
+            </div>
+
+            <div class="todo-content">
+                <!-- Кнопка добавления задачи -->
+                <button class="add-task-btn" onclick="openAddTaskModal()">
+                    <i class="fas fa-plus"></i> Добавить новую задачу
+                </button>
+
+                <!-- Фильтры -->
+                <div class="filters">
+                    <button class="filter-btn active" onclick="setFilter('all')">Все задачи</button>
+                    <button class="filter-btn" onclick="setFilter('active')">Активные</button>
+                    <button class="filter-btn" onclick="setFilter('completed')">Завершенные</button>
+                    <button class="filter-btn" onclick="setFilter('high')">Высокий приоритет</button>
+                </div>
+
+                <!-- Сетка задач -->
+                <div class="tasks-grid" id="tasksGrid">
+                    <!-- Пустое состояние -->
+                    <div class="empty-state" th:if="${tasks == null or #lists.size(tasks) == 0}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Список задач пуст</h3>
+                        <p>Добавьте свою первую задачу</p>
+                    </div>
+
+                    <!-- Карточки задач из БД -->
+                    <div th:each="task : ${tasks}"
+                         class="task-card"
+                         th:classappend="${task.completed} ? 'completed' : ''"
+                         th:attr="onclick=|openViewTaskModal(${task.id})|">
+                        <div class="task-header">
+                            <div class="task-title" th:text="${task.name}">Название задачи</div>
+                            <input type="checkbox" class="task-checkbox"
+                                   th:checked="${task.completed}"
+                                   th:attr="onclick=|event.stopPropagation(); toggleTask(${task.id})|">
+                        </div>
+                        <div class="task-comment" th:text="${task.comment} ?: 'Нет комментария'">Комментарий</div>
+                        <div class="task-footer">
+            <span th:if="${task.priority == 'high'}"
+                  class="task-priority priority-high">Высокий</span>
+                            <span th:if="${task.priority == 'medium'}"
+                                  class="task-priority priority-medium">Средний</span>
+                            <span th:if="${task.priority == 'low'}"
+                                  class="task-priority priority-low">Низкий</span>
+                            <span class="task-date" th:text="${task.createdAt}">Дата</span>
+                        </div>
+                    </div>
+                </div>            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div>
+            <!-- Статистика -->
+            <div class="stats-card">
+                <h3><i class="fas fa-chart-pie"></i> Статистика</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Всего задач</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="activeCount">0</div>
+                        <div class="stat-label">Активных</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="completedCount">0</div>
+                        <div class="stat-label">Завершено</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="completionRate">0%</div>
+                        <div class="stat-label">Прогресс</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Мотивация -->
+            <div class="motivation-card">
+                <h3><i class="fas fa-lightbulb"></i> Мотивация</h3>
+                <div class="motivation-text" id="motivationText">"Маленькие ежедневные улучшения приводят к большим
+                    результатам."
+                </div>
+                <div class="productivity-tip">
+                    <strong>Совет:</strong> Начните с самой важной задачи дня!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления задачи -->
+<div class="modal" id="addTaskModal">
+    <form id="card-form" th:action="@{/main/add}" method="post">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Добавить задачу</h3>
+                <button class="close-btn" onclick="closeAddTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="taskTitle">Название задачи</label>
+                    <input type="text" id="taskTitle" name="name" class="form-control"
+                           placeholder="Введите название задачи"
+                           maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskComment">Комментарий</label>
+                    <textarea id="taskComment" class="form-control" name="comment"
+                              placeholder="Добавьте описание или комментарий к задаче"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <div class="priority-selectors">
+                        <div class="priority-option high" data-priority="high" onclick="selectPriority('high')">
+                            Высокий
+                        </div>
+                        <div class="priority-option medium active" data-priority="medium"
+                             onclick="selectPriority('medium')">
+                            Средний
+                        </div>
+                        <div class="priority-option low" data-priority="low" onclick="selectPriority('low')">
+                            Низкий
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddTaskModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Добавить задачу</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Модальное окно просмотра задачи -->
+<div class="modal" id="viewTaskModal">
+    <form id="update-form" th:action="@{/main/id/update}" method="post">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-task"></i> Просмотр задачи</h3>
+                <button class="close-btn" onclick="closeViewTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Режим просмотра -->
+                <div id="viewMode">
+                    <div class="form-group">
+                        <label>Название задачи</label>
+                        <div class="form-control" style="background: var(--gray);" id="viewTaskTitle"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарий</label>
+                        <div class="task-detail-comment" id="viewTaskComment"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Приоритет</label>
+                        <div class="form-control" style="background: var(--gray);" id="viewTaskPriority"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Дата создания</label>
+                        <div class="form-control" style="background: var(--gray);" id="viewTaskDate"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Статус</label>
+                        <div class="form-control" style="background: var(--gray);" id="viewTaskStatus"></div>
+                    </div>
+                </div>
+
+                <!-- Режим редактирования -->
+                <div id="editMode" style="display: none;">
+                    <div class="form-group">
+                        <label for="editTaskTitle">Название задачи</label>
+                        <input type="text" id="editTaskTitle" class="form-control" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskComment">Комментарий</label>
+                        <textarea id="editTaskComment" class="form-control" placeholder="Добавьте описание или комментарий к задаче"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Приоритет</label>
+                        <div class="priority-selectors">
+                            <div class="priority-option high" data-priority="high" onclick="selectEditPriority('high')">
+                                Высокий
+                            </div>
+                            <div class="priority-option medium" data-priority="medium" onclick="selectEditPriority('medium')">
+                                Средний
+                            </div>
+                            <div class="priority-option low" data-priority="low" onclick="selectEditPriority('low')">
+                                Низкий
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="deleteCurrentTask()">Удалить</button>
+                <button type="button" class="btn btn-secondary" onclick="closeViewTaskModal()">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="toggleStatusBtn" onclick="toggleCurrentTaskStatus()">Отметить как выполненную</button>
+                <!-- Кнопка редактирования -->
+                <button type="button" class="btn btn-warning" id="editBtn" onclick="toggleEditMode()">
+                    <i class="fas fa-edit"></i> Редактировать
+                </button>
+                <!-- Кнопки для режима редактирования -->
+                <div id="editButtons" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Отмена</button>
+                    <button type="button" class="btn btn-success" onclick="saveEdit()">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Переменные для хранения исходных данных
+    let originalTaskData = null;
+    let isEditMode = false;
+
+    // Функция переключения режима редактирования
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const viewMode = document.getElementById('viewMode');
+        const editMode = document.getElementById('editMode');
+        const editBtn = document.getElementById('editBtn');
+        const editButtons = document.getElementById('editButtons');
+        const toggleStatusBtn = document.getElementById('toggleStatusBtn');
+
+        if (isEditMode) {
+            // Сохраняем исходные данные
+            saveOriginalData();
+
+            // Переключаем видимость
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+            editBtn.style.display = 'none';
+            editButtons.style.display = 'flex';
+            toggleStatusBtn.style.display = 'none';
+
+            // Заполняем поля редактирования
+            document.getElementById('editTaskTitle').value = originalTaskData.title;
+            document.getElementById('editTaskComment').value = originalTaskData.comment;
+            selectEditPriority(originalTaskData.priority);
+        } else {
+            // Возвращаемся к режиму просмотра
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+            editBtn.style.display = 'block';
+            editButtons.style.display = 'none';
+            toggleStatusBtn.style.display = 'block';
+        }
+    }
+
+    // Сохранение исходных данных задачи
+    function saveOriginalData() {
+        originalTaskData = {
+            title: document.getElementById('viewTaskTitle').textContent,
+            comment: document.getElementById('viewTaskComment').textContent,
+            priority: getCurrentPriorityValue()
+        };
+    }
+
+    // Получение текущего значения приоритета
+    function getCurrentPriorityValue() {
+        const priorityText = document.getElementById('viewTaskPriority').textContent.trim();
+        switch (priorityText) {
+            case 'Высокий': return 'high';
+            case 'Средний': return 'medium';
+            case 'Низкий': return 'low';
+            default: return 'medium';
+        }
+    }
+
+    // Выбор приоритета в режиме редактирования
+    function selectEditPriority(priority) {
+        // Удаляем активный класс у всех options
+        document.querySelectorAll('#editMode .priority-option').forEach(option => {
+            option.classList.remove('active');
+        });
+
+        // Добавляем активный класс выбранному option
+        document.querySelector(`#editMode .priority-option[data-priority="${priority}"]`).classList.add('active');
+    }
+
+    // Отмена редактирования
+    function cancelEdit() {
+        isEditMode = false;
+        const viewMode = document.getElementById('viewMode');
+        const editMode = document.getElementById('editMode');
+        const editBtn = document.getElementById('editBtn');
+        const editButtons = document.getElementById('editButtons');
+        const toggleStatusBtn = document.getElementById('toggleStatusBtn');
+
+        viewMode.style.display = 'block';
+        editMode.style.display = 'none';
+        editBtn.style.display = 'block';
+        editButtons.style.display = 'none';
+        toggleStatusBtn.style.display = 'block';
+    }
+
+    // Сохранение изменений
+    async function saveEdit() {
+        if (!currentTaskId) return;
+
+        const title = document.getElementById('editTaskTitle').value.trim();
+        const comment = document.getElementById('editTaskComment').value.trim();
+        const priority = document.querySelector('#editMode .priority-option.active').getAttribute('data-priority');
+
+        if (title === '') {
+            showMessage('Введите название задачи', 'warning');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('name', title);
+            formData.append('comment', comment);
+            formData.append('priority', priority);
+
+            const response = await fetch(`/main/${currentTaskId}/update`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showMessage('Задача обновлена!', 'success');
+
+                // Обновляем данные в режиме просмотра
+                document.getElementById('viewTaskTitle').textContent = title;
+                document.getElementById('viewTaskComment').textContent = comment;
+                document.getElementById('viewTaskPriority').textContent = getPriorityText(priority);
+
+                // Выходим из режима редактирования
+                cancelEdit();
+
+                // Обновляем карточку задачи в списке
+                updateTaskCardInList(currentTaskId, title, comment, priority);
+
+            } else {
+                showMessage('Ошибка при обновлении задачи', 'warning');
+            }
+        } catch (error) {
+            console.error('Error updating task:', error);
+            showMessage('Ошибка соединения', 'warning');
+        }
+    }
+
+    // Обновление карточки задачи в списке
+    function updateTaskCardInList(taskId, title, comment, priority) {
+        const taskElement = document.querySelector(`[onclick*="openViewTaskModal(${taskId})"]`);
+        if (taskElement) {
+            // Обновляем заголовок
+            const titleElement = taskElement.querySelector('.task-title');
+            if (titleElement) titleElement.textContent = title;
+
+            // Обновляем комментарий
+            const commentElement = taskElement.querySelector('.task-comment');
+            if (commentElement) commentElement.textContent = comment || 'Нет комментария';
+
+            // Обновляем приоритет
+            const priorityElement = taskElement.querySelector('.task-priority');
+            if (priorityElement) {
+                // Удаляем старые классы приоритета
+                priorityElement.classList.remove('priority-high', 'priority-medium', 'priority-low');
+
+                // Добавляем новый класс и текст
+                const priorityClass = `priority-${priority}`;
+                const priorityText = getPriorityText(priority);
+                priorityElement.className = `task-priority ${priorityClass}`;
+                priorityElement.textContent = priorityText;
+            }
+        }
+    }
+
+    // Закрытие модального окна просмотра задачи (обновленная)
+    function closeViewTaskModal() {
+        document.getElementById('viewTaskModal').classList.remove('active');
+        currentTaskId = null;
+
+        // Сбрасываем режим редактирования при закрытии
+        if (isEditMode) {
+            cancelEdit();
+        }
+    }
+
+    let currentFilter = 'all';
+    let selectedPriority = 'medium';
+    let currentTaskId = null;
+
+    const motivationQuotes = [
+        "Маленькие ежедневные улучшения приводят к большим результатам.",
+        "Лучший способ начать — это перестать говорить и начать делать.",
+        "Не откладывай на завтра то, что можно сделать сегодня.",
+        "Успех — это сумма небольших усилий, повторяемых изо дня в день.",
+        "Ваше время ограничено, не тратьте его, живя чужой жизнью."
+    ];
+
+    // Загрузка страницы
+    document.addEventListener('DOMContentLoaded', function () {
+        updateDate();
+        updateStats();
+        setRandomMotivation();
+
+        // Инициализация обработчиков событий
+        initializeEventListeners();
+    });
+
+    // Инициализация обработчиков событий
+    function initializeEventListeners() {
+        // Обработчик отправки формы добавления задачи
+        document.getElementById('card-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            addTask();
+        });
+
+        // Обработчик отправки формы обновления задачи
+        document.getElementById('update-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            updateCurrentTask();
+        });
+
+        // Закрытие модальных окон при клике вне их
+        window.addEventListener('click', function (event) {
+            const addModal = document.getElementById('addTaskModal');
+            const viewModal = document.getElementById('viewTaskModal');
+
+            if (event.target === addModal) {
+                closeAddTaskModal();
+            }
+
+            if (event.target === viewModal) {
+                closeViewTaskModal();
+            }
+        });
+    }
+
+    // Обновление даты
+    function updateDate() {
+        const now = new Date();
+        const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('ru-RU', options);
+    }
+
+    // Открытие модального окна добавления задачи
+    function openAddTaskModal() {
+        document.getElementById('addTaskModal').classList.add('active');
+        document.getElementById('taskTitle').focus();
+    }
+
+    // Закрытие модального окна добавления задачи
+    function closeAddTaskModal() {
+        document.getElementById('addTaskModal').classList.remove('active');
+        // Сброс формы
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskComment').value = '';
+        selectedPriority = 'medium';
+        updatePrioritySelectors();
+    }
+
+    // Выбор приоритета
+    function selectPriority(priority) {
+        // Удаляем активный класс у всех options
+        document.querySelectorAll('.priority-option').forEach(option => {
+            option.classList.remove('active');
+        });
+
+        // Добавляем активный класс выбранному option
+        document.querySelector(`.priority-option[data-priority="${priority}"]`).classList.add('active');
+
+        // Устанавливаем значение приоритета
+        selectedPriority = priority;
+    }
+
+    // Обновление отображения выбранного приоритета
+    function updatePrioritySelectors() {
+        document.querySelectorAll('.priority-option').forEach(option => {
+            option.classList.remove('active');
+            if (option.getAttribute('data-priority') === selectedPriority) {
+                option.classList.add('active');
+            }
+        });
+    }
+
+    // Добавление задачи через AJAX
+    async function addTask() {
+        const title = document.getElementById('taskTitle').value.trim();
+        const comment = document.getElementById('taskComment').value.trim();
+
+        if (title === '') {
+            showMessage('Введите название задачи', 'warning');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('name', title);
+            formData.append('comment', comment);
+            formData.append('priority', selectedPriority);
+
+            const response = await fetch('/main/add', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showMessage('Задача добавлена!', 'success');
+                closeAddTaskModal();
+
+                // Перезагружаем страницу для обновления списка задач
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+            } else {
+                showMessage('Ошибка при добавлении задачи', 'warning');
+            }
+        } catch (error) {
+            console.error('Error adding task:', error);
+            showMessage('Ошибка соединения', 'warning');
+        }
+    }
+
+    // Открытие модального окна просмотра задачи
+    function openViewTaskModal(id) {
+        currentTaskId = id;
+
+        // Находим задачу в DOM
+        const taskElement = document.querySelector(`[onclick*="openViewTaskModal(${id})"]`);
+        if (taskElement) {
+            const title = taskElement.querySelector('.task-title').textContent;
+            const comment = taskElement.querySelector('.task-comment').textContent;
+            const priority = taskElement.querySelector('.task-priority').textContent;
+            const date = taskElement.querySelector('.task-date').textContent;
+            const isCompleted = taskElement.classList.contains('completed');
+
+            document.getElementById('viewTaskTitle').textContent = title;
+            document.getElementById('viewTaskComment').textContent = comment;
+            document.getElementById('viewTaskPriority').textContent = priority;
+            document.getElementById('viewTaskDate').textContent = date;
+            document.getElementById('viewTaskStatus').textContent = isCompleted ? 'Выполнена' : 'Активна';
+
+            const toggleBtn = document.getElementById('toggleStatusBtn');
+            toggleBtn.textContent = isCompleted ? 'Отметить как активную' : 'Отметить как выполненную';
+
+            document.getElementById('viewTaskModal').classList.add('active');
+        }
+    }
+
+    // Закрытие модального окна просмотра задачи
+    function closeViewTaskModal() {
+        document.getElementById('viewTaskModal').classList.remove('active');
+        currentTaskId = null;
+    }
+
+    // Переключение статуса текущей задачи
+    async function toggleCurrentTaskStatus() {
+        if (currentTaskId) {
+            await toggleTask(currentTaskId);
+            closeViewTaskModal();
+        }
+    }
+
+    // Обновление текущей задачи
+    async function updateCurrentTask() {
+        if (!currentTaskId) return;
+
+        const title = document.getElementById('viewTaskTitle').textContent;
+        const comment = document.getElementById('viewTaskComment').textContent;
+
+        try {
+            const formData = new FormData();
+            formData.append('name', title);
+            formData.append('comment', comment);
+            formData.append('priority', selectedPriority);
+
+            const response = await fetch(`/main/${currentTaskId}/update`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showMessage('Задача обновлена!', 'success');
+                closeViewTaskModal();
+
+                // Перезагружаем страницу для обновления списка задач
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+            } else {
+                showMessage('Ошибка при обновлении задачи', 'warning');
+            }
+        } catch (error) {
+            console.error('Error updating task:', error);
+            showMessage('Ошибка соединения', 'warning');
+        }
+    }
+
+    // Удаление текущей задачи
+    async function deleteCurrentTask() {
+        if (currentTaskId) {
+            await deleteTask(currentTaskId);
+            closeViewTaskModal();
+        }
+    }
+
+    // Переключение статуса задачи через AJAX
+    async function toggleTask(id) {
+        try {
+            const response = await fetch(`/main/${id}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            });
+
+            if (response.ok) {
+                // Находим элемент задачи и обновляем его вид
+                const taskElement = document.querySelector(`[onclick*="openViewTaskModal(${id})"]`);
+                if (taskElement) {
+                    taskElement.classList.toggle('completed');
+                    const checkbox = taskElement.querySelector('.task-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    updateStats();
+
+                    showMessage('Статус задачи обновлен', 'success');
+                }
+            } else {
+                showMessage('Ошибка обновления статуса', 'warning');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Ошибка соединения', 'warning');
+        }
+    }
+
+    // Удаление задачи через AJAX
+    async function deleteTask(id) {
+        if (confirm('Удалить задачу?')) {
+            try {
+                const response = await fetch(`/main/${id}/delete`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Удаляем элемент из DOM
+                    const taskElement = document.querySelector(`[onclick*="openViewTaskModal(${id})"]`);
+                    if (taskElement) {
+                        taskElement.remove();
+                        updateStats();
+                        showMessage('Задача удалена', 'success');
+                    }
+                } else {
+                    showMessage('Ошибка при удалении задачи', 'warning');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Ошибка соединения', 'warning');
+            }
+        }
+    }
+
+    // Установка фильтра
+    function setFilter(filter) {
+        currentFilter = filter;
+
+        // Обновляем активные кнопки фильтров
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        applyFilter();
+    }
+
+    // Применение фильтра
+    function applyFilter() {
+        const taskElements = document.querySelectorAll('.task-card');
+
+        taskElements.forEach(task => {
+            const isCompleted = task.classList.contains('completed');
+            const priorityElement = task.querySelector('.task-priority');
+            const priority = priorityElement ? priorityElement.textContent.trim().toLowerCase() : '';
+
+            let shouldShow = true;
+
+            switch (currentFilter) {
+                case 'active':
+                    shouldShow = !isCompleted;
+                    break;
+                case 'completed':
+                    shouldShow = isCompleted;
+                    break;
+                case 'high':
+                    shouldShow = !isCompleted && priority === 'высокий';
+                    break;
+                default:
+                    shouldShow = true;
+            }
+
+            task.style.display = shouldShow ? 'block' : 'none';
+        });
+
+        updateStats();
+        checkEmptyState();
+    }
+
+    // Проверка пустого состояния после фильтрации
+    function checkEmptyState() {
+        const tasksGrid = document.getElementById('tasksGrid');
+
+        // Правильно подсчитываем видимые задачи
+        const visibleTasks = Array.from(tasksGrid.querySelectorAll('.task-card'))
+            .filter(task => task.style.display !== 'none')
+            .length;
+
+        let emptyState = tasksGrid.querySelector('.empty-state');
+
+        if (visibleTasks === 0) {
+            if (!emptyState) {
+                let message = '';
+                let icon = 'fas fa-clipboard-list';
+                let description = '';
+
+                if (currentFilter === 'completed') {
+                    message = 'Нет завершенных задач';
+                    icon = 'fas fa-check-circle';
+                    description = 'Попробуйте другой фильтр';
+                } else if (currentFilter === 'active') {
+                    message = 'Нет активных задач';
+                    icon = 'fas fa-check-double';
+                    description = 'Попробуйте другой фильтр';
+                } else if (currentFilter === 'high') {
+                    message = 'Нет задач с высоким приоритетом';
+                    icon = 'fas fa-flag';
+                    description = 'Попробуйте другой фильтр';
+                } else {
+                    message = 'Список задач пуст';
+                    icon = 'fas fa-clipboard-list';
+                    description = 'Добавьте свою первую задачу';
+                }
+
+                emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.innerHTML = `
+                <i class="${icon}"></i>
+                <h3>${message}</h3>
+                <p>${description}</p>
+            `;
+                tasksGrid.appendChild(emptyState);
+            }
+        } else if (emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    // Обновление статистики
+    function updateStats() {
+        const taskElements = document.querySelectorAll('.task-card');
+        const total = taskElements.length;
+        const completed = document.querySelectorAll('.task-card.completed').length;
+        const active = total - completed;
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('activeCount').textContent = active;
+        document.getElementById('completedCount').textContent = completed;
+        document.getElementById('completionRate').textContent = completionRate + '%';
+        document.getElementById('progressBar').style.width = completionRate + '%';
+    }
+
+    // Показать сообщение
+    function showMessage(text, type) {
+        // Создаем элемент сообщения
+        const message = document.createElement('div');
+        message.textContent = text;
+        message.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+    `;
+
+        if (type === 'success') {
+            message.style.background = 'var(--success)';
+        } else if (type === 'warning') {
+            message.style.background = 'var(--warning)';
+        } else {
+            message.style.background = 'var(--primary)';
+        }
+
+        document.body.appendChild(message);
+
+        // Удаляем сообщение через 3 секунды
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                message.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    // Установка случайной мотивационной цитаты
+    function setRandomMotivation() {
+        const randomIndex = Math.floor(Math.random() * motivationQuotes.length);
+        document.getElementById('motivationText').textContent = `"${motivationQuotes[randomIndex]}"`;
+    }
+
+    // Получение текстового представления приоритета
+    function getPriorityText(priority) {
+        switch (priority) {
+            case 'high':
+                return 'Высокий';
+            case 'medium':
+                return 'Средний';
+            case 'low':
+                return 'Низкий';
+            default:
+                return 'Не указан';
+        }
+    }
+
+    // Добавляем CSS анимации для сообщений
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes slideUp {
+        from { transform: translateY(-100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+
+    .task-card {
+        transition: all 0.3s ease;
+    }
+
+    .task-card.completed {
+        opacity: 0.7;
+        background: var(--gray-light);
+    }
+`;
+    document.head.appendChild(style);
+</script>
+</body>
+</html>
