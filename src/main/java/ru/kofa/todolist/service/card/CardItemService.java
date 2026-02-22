@@ -3,7 +3,7 @@ package ru.kofa.todolist.service.card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.kofa.todolist.dto.CardItemDto;
-import ru.kofa.todolist.exception.CardNotFoundException;
+import ru.kofa.todolist.exception.CardItemNotFoundException;
 import ru.kofa.todolist.model.Card;
 import ru.kofa.todolist.model.CardItem;
 import ru.kofa.todolist.repository.CardItemRepository;
@@ -23,7 +23,7 @@ public class CardItemService implements ICardItemService {
     private final ICardService cardService;
 
     @Override
-    public void addCard(CardItemRequest request, Long cardId) {
+    public CardItem addCardItem(CardItemRequest request, Long cardId) {
         Card card = cardService.getCard(cardId);
 
         CardItem cardItem = new CardItem();
@@ -34,28 +34,28 @@ public class CardItemService implements ICardItemService {
         cardItem.setCompleted(false);
         cardItem.setCreatedAt(LocalDateTime.now());
 
-        cardItemRepository.save(cardItem);
-
         card.getCardItem().add(cardItem);
         cardRepository.save(card);
+
+        return cardItemRepository.save(cardItem);
     }
 
     @Override
-    public void updateCard(CardItemRequest request, Long id) {
+    public CardItem updateCardItem(CardItemRequest request, Long id) {
         CardItem cardItem = cardItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card item not found"));
+                .orElseThrow(() -> new CardItemNotFoundException("Card item not found"));
 
         cardItem.setName(request.getName());
         cardItem.setComment(request.getComment());
         cardItem.setPriority(request.getPriority());
 
-        cardItemRepository.save(cardItem);
+        return cardItemRepository.save(cardItem);
     }
 
     @Override
-    public void deleteCard(Long cardItemId) { // Переименовал параметр для ясности
+    public void deleteCardItem(Long cardItemId) {
         CardItem cardItem = cardItemRepository.findById(cardItemId)
-                .orElseThrow(() -> new CardNotFoundException("Card item not found"));
+                .orElseThrow(() -> new CardItemNotFoundException("Card item not found"));
 
         Card card = cardItem.getCard();
         card.getCardItem().remove(cardItem);
@@ -73,13 +73,17 @@ public class CardItemService implements ICardItemService {
     }
 
     @Override
-    public void toggleCardStatus(Long id) {
+    public CardItem toggleCardItemStatus(Long id) {
         CardItem cardItem = cardItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card item not found"));
+                .orElseThrow(() -> new CardItemNotFoundException("Card item not found"));
 
         cardItem.setCompleted(!cardItem.isCompleted());
-        cardItemRepository.save(cardItem);
+        return cardItemRepository.save(cardItem);
     }
+
+    // ================================
+    // Второстепенные методы для работы
+    // ================================
 
     private CardItemDto convertToDto(CardItem cardItem) {
         return CardItemDto.builder()

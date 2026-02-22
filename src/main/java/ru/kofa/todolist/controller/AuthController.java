@@ -33,20 +33,24 @@ public class AuthController {
         return "auth";
     }
 
+    /*
+     * Выполняет вход и сохраняем JWT в Cookie
+     */
     @PostMapping("/login")
     public String login(@ModelAttribute @Valid LoginRequest login,
                         Model model,
                         HttpServletResponse response,
                         RedirectAttributes redirectAttributes) {
         try {
+            // Проверка есть ли такой пользователь
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken
                             (login.getEmail(), login.getPassword()));
 
+            // Генерируем токен для пользователя
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateTokenForUser(authentication);
 
-            // Сохраняем JWT в cookie
             Cookie jwtCookie = new Cookie("jwt", jwt);
             jwtCookie.setHttpOnly(true);
             jwtCookie.setSecure(false);
@@ -66,14 +70,17 @@ public class AuthController {
                                Model model,
                                HttpServletResponse response,
                                RedirectAttributes redirectAttributes) {
+        // Пароли не совпадают
         if (!registration.getPassword().equals(registration.getConfirmPassword())) {
             model.addAttribute("error", "Password don't match");
             return "auth";
         }
+        // Проверяем на уникальность имени пользователя
         if (userRepository.existsByUsername(registration.getUsername())) {
             model.addAttribute("error", "Choose different name");
             return "auth";
         }
+        // Проверка, что данный email не занят
         if (userRepository.existsByEmail(registration.getEmail())) {
             model.addAttribute("error", "Choose different email");
             return "auth";
@@ -81,6 +88,7 @@ public class AuthController {
 
         service.createUser(registration);
 
+        // Вход пользователя
         try {
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken
@@ -89,7 +97,6 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateTokenForUser(authentication);
 
-            // Сохраняем JWT в cookie
             Cookie jwtCookie = new Cookie("jwt", jwt);
             jwtCookie.setHttpOnly(true);
             jwtCookie.setSecure(false);
@@ -102,10 +109,11 @@ public class AuthController {
             return "auth";
         }
     }
-
+    /*
+     * Выход пользователя из системы и очищения Cookie
+     */
     @PostMapping("/logout")
     public String logout(HttpServletResponse response) {
-        // Очищаем Cookie
         Cookie jwtCookie = new Cookie("jwt", null);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);

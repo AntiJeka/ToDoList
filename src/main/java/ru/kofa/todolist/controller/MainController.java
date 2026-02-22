@@ -26,12 +26,14 @@ public class MainController {
     private final ICardService cardService;
     private final UserService userService;
 
+    // Главная страница пользователя со списком задач
     @GetMapping
     public String userAccess(Model model, Principal principal) {
         try {
             User user = userService.getAuthenticatedUser();
             Card card = cardService.getCardByUser(user);
 
+            // Создаём новый лист с задачами только что зарегистрированного пользователя
             if (card == null) {
                 card = cardService.initializeNewCart(user);
             }
@@ -51,38 +53,39 @@ public class MainController {
         try {
             User user = userService.getAuthenticatedUser();
             Card card = cardService.getCardByUser(user);
-            cardItemService.addCard(request, card.getId());
+
+            cardItemService.addCardItem(request, card.getId());
             return "redirect:/main?success=added";
         } catch (Exception e) {
             return "redirect:/main?error=add_failed";
         }
     }
 
-    @PostMapping("/{id}/update")
-    public String updateCard(@ModelAttribute CardItemRequest request, @PathVariable Long id) {
+    @PostMapping("/{cardItemId}/update")
+    public String updateCard(@ModelAttribute CardItemRequest request, @PathVariable Long cardItemId) {
         try {
-            cardItemService.updateCard(request, id);
+            cardItemService.updateCardItem(request, cardItemId);
             return "redirect:/main?success=updated";
         } catch (Exception e) {
             return "redirect:/main?error=update_failed";
         }
     }
 
-    @PostMapping("/{id}/delete")
-    public String deleteCard(@PathVariable Long id) {
+    @PostMapping("/{cardItemId}/delete")
+    public String deleteCard(@PathVariable Long cardItemId) {
         try {
-            cardItemService.deleteCard(id);
+            cardItemService.deleteCardItem(cardItemId);
             return "redirect:/main?success=deleted";
         } catch (Exception e) {
             return "redirect:/main?error=delete_failed";
         }
     }
 
-    @PostMapping("/{id}/toggle")
+    @PostMapping("/{cardItemId}/toggle")
     @ResponseBody
-    public ResponseEntity<String> toggleTaskStatus(@PathVariable Long id) {
+    public ResponseEntity<String> toggleTaskStatus(@PathVariable Long cardItemId) {
         try {
-            cardItemService.toggleCardStatus(id);
+            cardItemService.toggleCardItemStatus(cardItemId);
             return ResponseEntity.ok("Status updated");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating status");

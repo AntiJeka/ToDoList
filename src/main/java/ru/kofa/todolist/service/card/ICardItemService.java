@@ -7,11 +7,11 @@ import ru.kofa.todolist.request.CardItemRequest;
 import java.util.List;
 
 public interface ICardItemService {
-    void addCard(CardItemRequest request, Long cardId);
-    void updateCard(CardItemRequest request, Long id);
-    void deleteCard(Long cardId);
+    CardItem addCardItem(CardItemRequest request, Long cardId);
+    CardItem updateCardItem(CardItemRequest request, Long id);
+    void deleteCardItem(Long cardId);
 
     List<CardItemDto> getCardItemsByCardId(Long cardId);
 
-    void toggleCardStatus(Long id);
+    CardItem toggleCardItemStatus(Long id);
 }
